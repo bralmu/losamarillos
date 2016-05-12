@@ -29,3 +29,4 @@ def getTripFromHTML(rawdata):
         trips.append(Trip(hourslist[2*i], hourslist[2*i+1], float(priceslist[i].replace(",", "."))))   
     for trip in trips:
         print(trip.departureTime, " ", trip.arrivalTime, " ", trip.price)
+    return trips
