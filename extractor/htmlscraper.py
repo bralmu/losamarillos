@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import re
@@ -8,7 +7,8 @@ class Trip:
         self.departureTime = departureTime
         self.arrivalTime = arrivalTime
         self.price = price
-        
+
+# Uses regex to extract times and prices from html, generates trips and returns them.
 def getTripFromHTML(rawdata):
     prehoursre = re.compile('<td><strong>\d\d:\d\d</strong></td>')
     prepricesre = re.compile('<td class="numeric">\d+,\d+€</td></tr>')

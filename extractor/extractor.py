@@ -11,8 +11,11 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from htmlscraper import getTripFromHTML
 
+# SQLite DB file name to work with.
 DBFILE = 'schedule.db'
 
+# Reads bus origins from website and saves them to the table ORIGINS on the DB
+# simulation=True to work with a prefixed set of origins without connecting to the website.
 def getOriginsFromWebsite(simulation=False):
     if not simulation:
         try:
@@ -39,7 +42,8 @@ def getOriginsFromWebsite(simulation=False):
     conn.commit()        
     print("%s Origins rows inserted\t✓" % (len(origins)))
     conn.close()
-    
+
+# Reads bus destinations for each bus origin and saves the pairs to the table EDGES on the DB.
 def getDestinationsFromWebsite():
     url = 'https://regular.autobusing.com/parada_nombre_destinos'
     headers = {'cookie': 'rack.session=BAh7CUkiC2xvY2FsZQY6BkVGSSIHZXMGOwBUSSIPZW1wcmVzYV9pZAY7AEZp%0ADEkiD3Nlc3Npb25faWQGOwBUSSJFM2RlMDlkZjEzNjFhMmRiYzQ3ZTMzZGYw%0ANzFhN2RkYTdkYTRiNTZkMjg5Yjk2YzdkYjM2NWUwYzM1OWViYjY5NAY7AEZJ%0AIghvcGUGOwBGew86DXRpcG9faXl2SSIIaWRhBjsAVDoPZW1wcmVzYV9pZGkM%0AOhJzaW5mZV9lbXByZXNhMDoOb3JpZ2VuX2lkaQLyBToPZGVzdGlub19pZGkC%0A9AU6DmZlY2hhX2lkYVU6CURhdGVbC2kAaQOvfyVpAGkAaQBmDDIyOTkxNjE6%0ADmZlY2hhX3Z0YTA6DWNhbnRpZGFkaQY6FGhvcmFyaW9zX2lkYV9pZGkD6%2BoL%0AOgtzZWd1cm9pAA%3D%3D%0A--c959624cf7ff5bc4a94992a4ae66f2256532d407'}
@@ -64,7 +68,13 @@ def getDestinationsFromWebsite():
     conn.commit()
     print("Edges rows inserted\t✓")
     conn.close()
-    
+
+# Reads times and prices of all trips from bus origins to bus destinations on a date and saves them to the 
+# table SCHEDULE on de DB. The function uses Selenium and is designed to work with multiple threads.
+# thisthreadid: a unique value in the range [0, totalthreads)
+# totalthreads: how many threads have been started. >1
+# origins and destinations: pairs of bus origins and bus destinations. Linked by index (origins[4]->destination[4])
+# date: uses format "DD/MM/YYYY"
 def getTimesAndPrices(thisthreadid, totalthreads, origins, destinations, date):
     global finished
     driver = webdriver.Firefox()
@@ -95,8 +105,13 @@ def getTimesAndPrices(thisthreadid, totalthreads, origins, destinations, date):
     finished[thisthreadid] = True
 
 
-getOriginsFromWebsite(True) #extracts and saves origin location names
-getDestinationsFromWebsite() #extracts and saves destination location names for each origin, creating origin-destination pairs.
+# START
+
+#extracts and saves origin location names
+getOriginsFromWebsite(True)
+
+#extracts and saves destination location names for each origin, creating origin-destination pairs.
+getDestinationsFromWebsite() 
 
 # creates empty schedule table
 conn = sqlite3.connect(DBFILE)
@@ -120,7 +135,7 @@ conn.close()
 
 # extracts times and prices for each origin-destination pair on date DATE
 DATE = "13/05/2016"
-SELENIUM_THREADS = 2 # can use multiple threads to go extract data faster
+SELENIUM_THREADS = 2 # can use multiple threads to extract data faster
 finished = [False] * SELENIUM_THREADS # global flag to know if the threads have finished
 tlist = []
 for threadid in range(0, SELENIUM_THREADS):
